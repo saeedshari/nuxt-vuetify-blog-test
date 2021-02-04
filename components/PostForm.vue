@@ -21,8 +21,10 @@
             type="submit" 
             color="teal accent-4" 
             :disabled="!valid"
-            :loading="addLoading">
-            Submit</v-btn>
+            :loading="addLoading"
+            >
+            {{submitBtnText}}
+            </v-btn>
     </v-form>
 </div>
 </template>
@@ -46,19 +48,40 @@ export default {
                     v => !!v || 'Body is required',
                     v => v.length >= 100 || 'Body must be at least 100 characters',
                 ]
-            }
+            },
         }
     },
     methods:{
         submitForm(){
             this.addLoading=true
-            this.$store.dispatch('addPostAction',this.form).then(()=>{
+            const action = this.postId 
+            ? {name:'editPostAction', payload:{...this.form,id:this.postId}}
+            : {name:'addPostAction', payload:this.form}
+            this.$store.dispatch(action.name, action.payload).then(()=>{
                 this.$router.push('/admin')
             }).finally(()=>{
                 this.addLoading = false
             })
+        },
+        getPost(){
+            this.$store.dispatch('getPost', this.postId).then(post =>{
+                this.form.title = post.title;
+                this.form.body = post.body;
+            })
         }
-    }
+    },
+
+    mounted(){
+        this.postId && this.getPost();  //if postId is true run getPost()
+    },
+    computed:{
+        postId(){
+            return +this.$route.params.id  //+ for string to number
+        },
+        submitBtnText(){
+            return this.postId ? 'save' : 'submit'
+        }
+    },
 }
 </script>
 
